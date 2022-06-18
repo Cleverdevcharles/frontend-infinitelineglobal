@@ -1,135 +1,84 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
 import {
   getStatusValues,
   listOrders,
   updateOrderStatus,
-} from '../../functions/order'
-import Header from '../../components/navs/header/Header'
-import { isAuthenticated } from '../../functions/auth'
-import SideBar from './nav/SideBar'
-import Footer from './nav/Footer'
-import PageArea from './nav/PageArea'
-import { toast } from 'react-toastify'
-import { read } from '../../functions/user'
+} from "../../functions/order";
+import Header from "../../components/navs/header/Header";
+import { isAuthenticated } from "../../functions/auth";
+import SideBar from "./nav/SideBar";
+import Footer from "./nav/Footer";
+import PageArea from "./nav/PageArea";
+import { toast } from "react-toastify";
 
-const Orders = ({ match }) => {
-  const [orders, setOrders] = useState([])
-  const [statusValues, setStatusValues] = useState([])
-  const [menu, setMenu] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [values, setValues] = useState({
-    paymentOption: '',
-    cryptoAddress: '',
-    cryptoNetwork: '',
-    error: false,
-  })
+const Orders = () => {
+  const [orders, setOrders] = useState([]);
+  const [statusValues, setStatusValues] = useState([]);
+  const [menu, setMenu] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const { paymentOption, cryptoAddress, cryptoNetwork } = values
-
-  const init = () => {
-    const userId = user._id
-    console.log(userId)
-    read(userId, token).then((data) => {
-      if (data.error) {
-        console.log(token)
-        console.log(data)
-        setValues({ ...values, error: true })
-      } else {
-        console.log(data)
-        if (data.verified) {
-          setValues({
-            ...values,
-            paymentOption: data.paymentOption,
-            cryptoAddress: data.cryptoAddress,
-            cryptoNetwork: data.cryptoNetwork,
-          })
-        } else {
-          setValues({
-            ...values,
-            paymentOption: data.paymentOption,
-            cryptoAddress: data.cryptoAddress,
-            cryptoNetwork: data.cryptoNetwork,
-          })
-        }
-      }
-    })
-  }
+  const toggleMenu = () => {
+    setMenu(menu ? false : true);
+  };
 
   useEffect(() => {
-    const userId = match.params.userId
-    init(userId)
-  }, [])
+    const menu = window.localStorage.getItem("Menu");
+    setMenu(JSON.parse(menu));
+  }, []);
 
   useEffect(() => {
-    const menu = window.localStorage.getItem('Menu')
-    setMenu(JSON.parse(menu))
-  }, [])
+    window.localStorage.setItem("Menu", JSON.stringify(menu));
+  });
 
-  useEffect(() => {
-    window.localStorage.setItem('Menu', JSON.stringify(menu))
-  })
-
-  const { user, token } = isAuthenticated()
+  const { user, token } = isAuthenticated();
 
   const loadOrders = () => {
-    setLoading(true)
+    setLoading(true);
     listOrders(user._id, token).then((data) => {
       if (data.error) {
-        console.log(data.error)
-        setLoading(false)
+        console.log(data.error);
+        setLoading(false);
       } else {
-        setOrders(data)
-        setLoading(false)
+        setOrders(data);
+        setLoading(false);
       }
-    })
-  }
+    });
+  };
 
   const loadStatusValues = () => {
     getStatusValues(user._id, token).then((data) => {
       if (data.error) {
-        console.log(data.error)
+        console.log(data.error);
       } else {
-        setStatusValues(data)
+        setStatusValues(data);
       }
-    })
-  }
+    });
+  };
 
   useEffect(() => {
-    loadOrders()
-    loadStatusValues()
-  }, [])
+    loadOrders();
+    loadStatusValues();
+  }, []);
 
   const showInput = (key, value) => (
     <>
       <div>{key}</div>
       {value}
     </>
-  )
-
-  const investorWithdrawalDetails = (
-    currency_address,
-    currency_option,
-    currency_network,
-  ) => {
-    ;<>
-      <td style={{ color: '#fff' }}>{currency_option}</td>
-      <td style={{ color: '#fff' }}>{currency_address}</td>
-      <td style={{ color: '#fff' }}>{currency_network}</td>
-    </>
-  }
+  );
 
   const handleStatusChange = (e, orderId) => {
     updateOrderStatus(user._id, token, orderId, e.target.value).then((data) => {
       if (data.error) {
-        toast.success(`Status update failed`)
-        console.log('Status update failed')
+        toast.success(`Status update failed`);
+        console.log("Status update failed");
       } else {
-        loadOrders()
-        console.log(data)
-        toast.success(`Status update successfully to ${e.target.value}`)
+        loadOrders();
+        console.log(data);
+        toast.success(`Status update successfully to ${e.target.value}`);
       }
-    })
-  }
+    });
+  };
 
   const showStatus = (o) => (
     <div className="form-group">
@@ -137,9 +86,7 @@ const Orders = ({ match }) => {
         className="form-control"
         onChange={(e) => handleStatusChange(e, o._id)}
       >
-        <option selected disabled>
-          Update Status
-        </option>
+        <option selected disabled>Update Status</option>
         {statusValues.map((status, index) => (
           <option key={index} value={status}>
             {status}
@@ -147,7 +94,7 @@ const Orders = ({ match }) => {
         ))}
       </select>
     </div>
-  )
+  );
 
   return (
     <>
@@ -177,15 +124,10 @@ const Orders = ({ match }) => {
                     <ul id="autoWidth" className="cs-hidden">
                       <div
                         className="form-inner table-inner"
-                        style={{ overflowX: 'auto' }}
+                        style={{ overflowX: "auto" }}
                       >
-                        <table
-                          style={{ overFlow: 'scroll', whiteSpace: 'nowrap' }}
-                        >
-                          <tr
-                            className="text-white"
-                            style={{ background: '#fc0077', color: '#fff' }}
-                          >
+                        <table style={{ overFlow: "scroll", whiteSpace: "nowrap" }}>
+                          <tr className="text-white" style={{background: "#fc0077", color: "#fff"}}>
                             <th>Investor</th>
                             <th>Transaction ID</th>
                             <th>Transaction Hash</th>
@@ -197,95 +139,67 @@ const Orders = ({ match }) => {
                             <th>Withdrawal Date</th>
                             <th>Status</th>
                           </tr>
-                          {orders &&
-                            orders.map((o, oIndex) => {
-                              return (
-                                <>
-                                  <tr
-                                    key={oIndex}
-                                    style={{ backgroundColor: '#0a002ade' }}
-                                  >
-                                    <td style={{ color: '#fff' }}>
-                                      {o.investor}
-                                    </td>
-                                    <td style={{ color: '#fff' }}>
-                                      {o.transaction_id}
-                                    </td>
-                                    <td style={{ color: '#fff' }}>
-                                      {o.currency_option === 'BNB' ? (
-                                        <a
-                                          href={`https://bscscan.com/tx/${o.transaction_hash}`}
-                                          target="_blank"
-                                          className="text-white"
-                                          style={{
-                                            textDecoration: 'underline',
-                                            color: '#fff',
-                                          }}
-                                        >
-                                          {o.transaction_hash}
-                                        </a>
-                                      ) : null}
-                                      {o.currency_option === 'ETH' ? (
-                                        <a
-                                          href={`https://etherscan.io/tx/${o.transaction_hash}`}
-                                          target="_blank"
-                                          className="text-white"
-                                          style={{
-                                            textDecoration: 'underline',
-                                            color: '#fff',
-                                          }}
-                                        >
-                                          {o.transaction_hash}
-                                        </a>
-                                      ) : null}
-                                      {o.currency_option === 'USDT' ? (
-                                        <a
-                                          href={`https://tronscan.org/#/address/${o.transaction_hash}`}
-                                          target="_blank"
-                                          className="text-white"
-                                          style={{
-                                            textDecoration: 'underline',
-                                            color: '#fff',
-                                          }}
-                                        >
-                                          {o.transaction_hash}
-                                        </a>
-                                      ) : null}
-                                      {o.currency_option === 'BTC' ? (
-                                        <a
-                                          href={`https://blockchain.com/btc/tx/${o.transaction_hash}`}
-                                          target="_blank"
-                                          className="text-white"
-                                          style={{
-                                            textDecoration: 'underline',
-                                            color: '#fff',
-                                          }}
-                                        >
-                                          {o.transaction_hash}
-                                        </a>
-                                      ) : null}
-                                    </td>
-                                    {investorWithdrawalDetails(
-                                      paymentOption,
-                                      cryptoAddress,
-                                      cryptoNetwork,
-                                    )}
-                                    {o.investmentpackages.map((ip, pIndex) => (
-                                      <td key={ip} style={{ color: '#fff' }}>
-                                        {showInput(ip.name)}
-                                      </td>
-                                    ))}
-                                    <td style={{ color: '#fff' }}>
-                                      ${o.amount}
-                                    </td>
-                                    <td style={{ color: '#fff' }}>
-                                      {o.withdrawalDate}
-                                    </td>
-                                    <td>{showStatus(o)}</td>
-                                  </tr>
-                                </>
-                              )
-                            })}
+                          {orders && orders.map((o, oIndex) => {
+                            return (
+                              <>
+                                <tr key={oIndex} style={{backgroundColor: "#0a002ade"}}>
+                                  <td style={{color: "#fff"}}>{o.investor}</td>
+                                  <td style={{color: "#fff"}}>{o.transaction_id}</td>
+                                  <td style={{color: "#fff"}}>
+                                    {o.currency_option === "BNB" ?
+                                     <a
+                                     href={`https://bscscan.com/tx/${o.transaction_hash}`}
+                                     target="_blank"
+                                     className="text-white"
+                                     style={{textDecoration: "underline", color: "#fff"}}
+                                   >
+                                     {o.transaction_hash}
+                                   </a> : null
+                                    }
+                                    {o.currency_option === "ETH" ?
+                                     <a
+                                     href={`https://etherscan.io/tx/${o.transaction_hash}`}
+                                     target="_blank"
+                                     className="text-white"
+                                     style={{textDecoration: "underline", color: "#fff"}}
+                                   >
+                                     {o.transaction_hash}
+                                   </a> : null
+                                    }
+                                    {o.currency_option === "USDT" ?
+                                     <a
+                                     href={`https://tronscan.org/#/address/${o.transaction_hash}`}
+                                     target="_blank"
+                                     className="text-white"
+                                     style={{textDecoration: "underline", color: "#fff"}}
+                                   >
+                                     {o.transaction_hash}
+                                   </a>:null
+                                    }
+                                    {o.currency_option === "BTC" ?
+                                     <a
+                                     href={`https://blockchain.com/btc/tx/${o.transaction_hash}`}
+                                     target="_blank"
+                                     className="text-white"
+                                     style={{textDecoration: "underline", color: "#fff"}}
+                                   >
+                                     {o.transaction_hash}
+                                   </a> : null
+                                    }
+                                  </td>
+                                  <td style={{color: '#fff'}}>{o.user.currency_option}</td>
+                                  <td style={{color: '#fff'}}>{o.user.currency_address}</td>
+                                  <td style={{color: '#fff'}}>{o.user.currency_address}</td>
+                                  {o.investmentpackages.map((ip, pIndex) => (
+                                    <td key={ip} style={{color: "#fff"}}>{showInput(ip.name)}</td>
+                                  ))}
+                                  <td style={{color: '#fff'}}>${o.amount}</td>
+                                  <td style={{color: "#fff"}}>{o.withdrawalDate}</td>
+                                  <td>{showStatus(o)}</td>
+                                </tr>
+                              </>
+                            );
+                          })}
                         </table>
                       </div>
                     </ul>
@@ -298,7 +212,7 @@ const Orders = ({ match }) => {
       </main>
       <Footer />
     </>
-  )
-}
+  );
+};
 
-export default Orders
+export default Orders;
