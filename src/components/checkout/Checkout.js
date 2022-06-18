@@ -281,7 +281,12 @@ const Checkout = ({
       payment_option: paymentOption,
       investor: user.fullName,
       amount: getTotal(investmentpackages),
-      withdrawalDate: getWithdrawalDate(),
+      withdrawalDate: new Date()
+        .toJSON()
+        .slice(0, 10)
+        .split('-')
+        .reverse()
+        .join('/'),
     }
     createOrder(userId, token, createOrderData)
       .then((response) => {

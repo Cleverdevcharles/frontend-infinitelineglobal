@@ -18,11 +18,10 @@ import {
 } from '../../functions/withdrawal'
 
 const History = ({ match }) => {
-  const [menu, setMenu] = useState(false)
-  const [withdrawalRequest, setWithdrawalRequest] = useState(false)
   const [history, setHistory] = useState([])
-  const [orders, setOrders] = useState([])
+  const [notVerifiedInvesment, setNotVerifiedInvesment] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
   const [withdraw, setWithdraw] = useState('Withdraw')
   const [values, setValues] = useState({
     referralEarnings: '',
@@ -30,7 +29,6 @@ const History = ({ match }) => {
     purchaseHistory: '',
     error: false,
   })
-  const [purchaseHistory, setPurchaseHistory] = useState([])
 
   const form = useRef()
   const referralForm = useRef()
@@ -93,7 +91,7 @@ const History = ({ match }) => {
 
   const handleWithdrawalRequest = (e) => {
     e.preventDefault()
-    setLoading(true)
+    setSending(true)
     emailjs
       .sendForm(
         'service_wue3oxa',
@@ -102,11 +100,11 @@ const History = ({ match }) => {
         'ZekXOuuaWaw8plzu3',
       )
       .then((res) => {
-        console.log(res)
+        setSending(false)
         toast.success('Withdrawal request sent...Please wait for your payment.')
       })
       .catch((err) => {
-        console.log(err)
+        setSending(false)
         toast.error('Withdrawal Failed. Please try again.')
       })
   }
@@ -114,17 +112,8 @@ const History = ({ match }) => {
   const handleReferralWithdrawal = (e) => {
     e.preventDefault()
     setLoading(true)
-
-    history &&
-      history.map((h, i) => {
-        h.investmentpackages.map((ip, i) => {
-          if (h.status === "Not Verified") {
-            return toast.error(
-              'Please invest in order to withdraw your referral earnings.',
-            )
-          }
-        })
-      })
+    setNotVerifiedInvesment(true)
+   
 
     reduceReferralEarnings({
       referralCode,
@@ -145,12 +134,12 @@ const History = ({ match }) => {
             toast.success(
               'Referral withdrawal request sent...Please wait for your payment.',
             )
+            setLoading(false)
           })
           .catch((err) => {
-            console.log(err)
+            setLoading(false)
             toast.error('Referral withdrawal Failed. Please try again.')
           })
-        setLoading(false)
       }
     })
   }
@@ -169,39 +158,21 @@ const History = ({ match }) => {
     init(user._id, token)
   }, [])
 
-  var withdrawalCount
+  var withdrawalDayCount = new Date()
+    .toJSON()
+    .slice(0, 10)
+    .split('-')
+    .reverse()
+    .join('/')
+    .match(/(\d+)/)[1]
 
-  const withdrawalDate = () => {
-    var today = new Date()
-    var business_days = 14
+  const d = new Date()
+  var withdrawalMonthCount = d.getMonth()
 
-    var withdrawalDate = today
-    var total_days = business_days
-    for (var days = 1; days <= total_days; days++) {
-      withdrawalDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000)
-      // withdrawalDate.setDate(withdrawalDate.getDate() + parseInt(7));
-      if (withdrawalDate.getDay() == 0 || withdrawalDate.getDay() == 6) {
-        //it's a weekend day so we increase the total_days of 1
-        total_days++
-        // counter+1
-        if (total_days++) {
-          withdrawalCount++
-        }
-      }
+  var withdrawalYearCount = d.getFullYear()
 
-      console.log("TODAY'S DATE: ", today.toLocaleDateString())
-      console.log('WITHDRAWAL DATE: ', withdrawalDate.toLocaleDateString())
-      if (today.toLocaleDateString() === withdrawalDate.toLocaleDateString()) {
-        break
-      }
-    }
-    if (withdrawalDate.toLocaleDateString() === '6/24/2022') {
-      setWithdraw('Withdraw')
-      console.log('Withdraw: ', 'true')
-    }
-
-    return today.toLocaleDateString()
-  }
+  let year = d.getFullYear()
+  let month = d.getMonth()
 
   const handleUpLiner = (referralCode, referralEarnings) => (
     <>
@@ -237,7 +208,7 @@ const History = ({ match }) => {
                 <th>Currency Option</th>
                 <th>Amount</th>
                 <th>Interest</th>
-                <th>Withdrawal</th>
+                <th>Withdrawal(DD/MM/YY)</th>
               </tr>
               {history.map((h, i) => {
                 return (
@@ -310,97 +281,144 @@ const History = ({ match }) => {
                               )}
                               )
                             </td>
-
                             <td>
-                              {withdrawalDate() === h.withdrawalDate ? (
-                                <>
-                                  <form
-                                    ref={form}
-                                    onSubmit={handleWithdrawalRequest}
+                              {h.status === 'Not Verified' ? (
+                                <center>
+                                  <button
+                                    disabled
+                                    className="form-control"
+                                    style={{
+                                      background: 'red',
+                                      color: '#000',
+                                      padding: '5px',
+                                      border: 'none',
+                                    }}
                                   >
-                                    <input
-                                      type="text"
-                                      id="msg_subject"
-                                      name="msg_subject"
-                                      style={{ display: 'none' }}
-                                      value="Referral Withdrawal Request"
-                                    />
-                                    <input
-                                      type="text"
-                                      name="name"
-                                      style={{ display: 'none' }}
-                                      value={`${user.fullName}`}
-                                    />
-                                    <input
-                                      type="text"
-                                      name="email"
-                                      style={{ display: 'none' }}
-                                      value={`${user.email}`}
-                                    />
-                                    <input
-                                      type="text"
-                                      name="message"
-                                      style={{ display: 'none' }}
-                                      value={`New Withdrawal Request From ${
-                                        user.fullName
-                                      } with ID = ${
-                                        user._id
-                                      } for a withdrawal of $${Math.round(
-                                        (ip.percentage_interest * h.amount) /
-                                          100,
-                                      )}, 
+                                    Not Verified
+                                  </button>
+                                </center>
+                              ) : (
+                                <>
+                                  {h.status === 'Verified' ? (
+                                    <>
+                                      {(Number(withdrawalDayCount) ==
+                                        Number(
+                                          h.withdrawalDate.match(/(\d+)/)[1],
+                                        ) &&
+                                        Number(withdrawalMonthCount) ==
+                                          Number(month) &&
+                                        Number(withdrawalYearCount) ==
+                                          Number(year)) ||
+                                      (Number(withdrawalDayCount) >
+                                        Number(
+                                          h.withdrawalDate.match(/(\d+)/)[1],
+                                        ) +
+                                          h.duration &&
+                                        Number(withdrawalMonthCount) ==
+                                          Number(month) &&
+                                        Number(withdrawalYearCount) ==
+                                          Number(year)) ? (
+                                        <form
+                                          ref={form}
+                                          onSubmit={handleWithdrawalRequest}
+                                        >
+                                          <input
+                                            type="text"
+                                            id="msg_subject"
+                                            name="msg_subject"
+                                            style={{ display: 'none' }}
+                                            value="Withdrawal Request"
+                                          />
+                                          <input
+                                            type="text"
+                                            name="name"
+                                            style={{ display: 'none' }}
+                                            value={`${user.fullName}`}
+                                          />
+                                          <input
+                                            type="text"
+                                            name="email"
+                                            style={{ display: 'none' }}
+                                            value={`${user.email}`}
+                                          />
+                                          <input
+                                            type="text"
+                                            name="message"
+                                            style={{ display: 'none' }}
+                                            value={`New Withdrawal Request From ${
+                                              user.fullName
+                                            } with ID = ${
+                                              user._id
+                                            } for a withdrawal of $${Math.round(
+                                              (ip.percentage_interest *
+                                                h.amount) /
+                                                100,
+                                            )}, 
                                       with a transaction ID = ${
                                         h.transaction_id
                                       }.
                                       Which is ${ip.percentage_interest}% of $${
-                                        h.amount
-                                      }.
+                                              h.amount
+                                            }.
                                       Please make payment and update your orders using this link
                                       ${API}/admin-investment-orders`}
-                                    />
-                                    {/* <div>{counter}</div> */}
-                                    {h.status === 'Not Verified' ? (
-                                      <>
-                                        <button
-                                          disabled
-                                          style={{ background: 'transparent' }}
-                                        >
-                                          Not Verified
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <button
-                                          type="submit"
-                                          className="form-control"
-                                          disabled={
-                                            h.status === 'Paid' ? true : false
-                                          }
-                                          style={
-                                            h.status === 'Paid'
-                                              ? { backgroundColor: 'gray' }
-                                              : {
-                                                  background: 'green',
-                                                  color: '#fff',
-                                                }
-                                          }
-                                        >
-                                          {h.status === 'Paid' ? (
-                                            <>Paid</>
-                                          ) : (
-                                            <span>{withdraw}</span>
-                                          )}
-                                        </button>
-                                      </>
-                                    )}
-                                  </form>
-                                </>
-                              ) : (
-                                <>
-                                  {h.status === 'Verified' ? (
-                                    <>{h.withdrawalDate}</>
+                                          />
+                                          <center>
+                                            <button
+                                              type="submit"
+                                              className="form-control"
+                                              disabled={
+                                                h.status === 'Paid'
+                                                  ? true
+                                                  : false
+                                              }
+                                              style={{
+                                                background: 'green',
+                                                color: '#fff',
+                                                padding: '5px',
+                                                border: 'none',
+                                              }}
+                                            >
+                                              <span>
+                                                {sending
+                                                  ? 'sending...'
+                                                  : withdraw}
+                                              </span>
+                                            </button>
+                                          </center>
+                                        </form>
+                                      ) : (
+                                        <center>
+                                          <button
+                                            disabled
+                                            className="form-control"
+                                            style={{
+                                              background: 'orange',
+                                              color: '#000',
+                                              padding: '5px',
+                                              border: 'none',
+                                            }}
+                                          >
+                                            {'Not due till ' + h.withdrawalDate}
+                                          </button>
+                                        </center>
+                                      )}
+                                    </>
                                   ) : (
-                                    <>{h.status}</>
+                                    <center>
+                                      <button
+                                        disabled
+                                        className="form-control"
+                                        style={{
+                                          background: 'blue',
+                                          color: '#fff',
+                                          padding: '5px',
+                                          border: 'none',
+                                        }}
+                                      >
+                                        {h.status}
+                                      </button>
+                                    </center>
                                   )}
                                 </>
                               )}
