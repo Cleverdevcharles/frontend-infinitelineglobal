@@ -31,6 +31,8 @@ import USDT_IMAGE from '../navs/images/usdt-trc20.jpg'
 import BTC_IMAGE from '../navs/images/btc.jpg'
 import BNB_IMAGE from '../navs/images/bnb-bep20.jpg'
 import ETH_IMAGE from '../navs/images/eth-erc20.jpg'
+import { read } from '../../functions/user'
+import { useParams } from 'react-router'
 
 const currencyOptions = [
   {
@@ -78,6 +80,20 @@ const Checkout = ({
     instance: {},
     address: '',
   })
+  const [values, setValues] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    referralCode: '',
+    state: '',
+    country: '',
+    paymentOption: '',
+    cryptoAddress: '',
+    cryptoNetwork: '',
+    verified: '',
+    password: '',
+    error: false,
+  })
   const [items, setItems] = useState([])
   const [proceedToPayment, setProceedToPayment] = useState(false)
   const [currency, setCurrency] = useState(currencyOptions[0].value)
@@ -88,6 +104,7 @@ const Checkout = ({
   const [usdt, setUSDT] = useState('')
   const [btc, setBTC] = useState('')
   const [transactionHash, setTransactionHash] = useState('')
+  const params = useParams()
 
   const handleProceedToPayment = () => {
     setProceedToPayment(proceedToPayment ? false : true)
@@ -99,6 +116,76 @@ const Checkout = ({
   useEffect(() => {
     setItems(getCart())
   }, [run])
+
+  const {
+    fullName,
+    email,
+    password,
+    phone,
+    role,
+    referralCode,
+    paymentOption,
+    cryptoAddress,
+    cryptoNetwork,
+    state,
+    verified,
+    country,
+  } = values
+
+  const init = () => {
+    const userId = user._id
+    console.log(userId)
+    read(userId, token).then((data) => {
+      if (data.error) {
+        console.log(token)
+        console.log(data)
+        setValues({ ...values, error: true })
+      } else {
+        console.log(data)
+        if (data.verified) {
+          const verifiedUser = 'Yes'
+          setValues({
+            ...values,
+            fullName: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            state: data.state,
+            country: data.country,
+            role: data.role,
+            paymentOption: data.paymentOption,
+            cryptoAddress: data.cryptoAddress,
+            cryptoNetwork: data.cryptoNetwork,
+            verified: verifiedUser,
+            referralCode: data.referralCode,
+            password: data,
+          })
+        } else {
+          setValues({
+            ...values,
+            fullName: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            state: data.state,
+            country: data.country,
+            role: data.role,
+            paymentOption: data.paymentOption,
+            cryptoAddress: data.cryptoAddress,
+            cryptoNetwork: data.cryptoNetwork,
+            verified: 'Not verified',
+            referralCode: data.referralCode,
+            password: data,
+          })
+        }
+      }
+    })
+  }
+
+  useEffect(() => {
+    const userId = params.userId
+    init(userId)
+  }, [])
 
   useEffect(() => {
     axios
@@ -189,6 +276,9 @@ const Checkout = ({
       transaction_id: transId.slice(2, 10),
       transaction_hash: transactionHash,
       currency_option: currency,
+      payment_address: cryptoAddress,
+      payment_network: cryptoNetwork,
+      payment_option: paymentOption,
       investor: user.fullName,
       amount: getTotal(investmentpackages),
       withdrawalDate: getWithdrawalDate(),
@@ -202,7 +292,9 @@ const Checkout = ({
             success: true,
           })
         })
-        toast.success(`Thanks! Your payment of $${amount} was successful!`)
+        toast.success(
+          `Thanks! Your payment of $${amount} was successful! Please wait as we verify your payment.`,
+        )
         setTimeout(() => {
           history.push('/investment')
         }, 5000)

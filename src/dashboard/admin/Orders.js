@@ -132,8 +132,9 @@ const Orders = () => {
                             <th>Transaction ID</th>
                             <th>Transaction Hash</th>
                             <th>Currency Option</th>
-                            <th>Crypto Address</th>
-                            <th>Crypto Network</th>
+                            <th>Payment Address</th>
+                            <th>Payment Network</th>
+                            <th>Payment Option</th>
                             <th>Package</th>
                             <th>Amount</th>
                             <th>Withdrawal Date</th>
@@ -187,9 +188,10 @@ const Orders = () => {
                                    </a> : null
                                     }
                                   </td>
-                                  <td style={{color: '#fff'}}>{o.user.currency_option}</td>
-                                  <td style={{color: '#fff'}}>{o.user.currency_address}</td>
-                                  <td style={{color: '#fff'}}>{o.user.currency_address}</td>
+                                  <td style={{color: '#fff'}}>{o.currency_option}</td>
+                                  <td style={{color: '#fff'}}>{o.payment_address}</td>
+                                  <td style={{color: '#fff'}}>{o.payment_network}</td>
+                                  <td style={{color: '#fff'}}>{o.payment_option}</td>
                                   {o.investmentpackages.map((ip, pIndex) => (
                                     <td key={ip} style={{color: "#fff"}}>{showInput(ip.name)}</td>
                                   ))}
